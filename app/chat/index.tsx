@@ -1,32 +1,43 @@
-import React, { useCallback, useState } from "react";
-import { GiftedChat, IMessage } from "react-native-gifted-chat";
-import { sendMessageToBot } from "../../src/api/chat.service";
+// FE-ChatBot/app/chat/index.tsx
 
-export default function ChatScreen() {
-  const [messages, setMessages] = useState<IMessage[]>([]);
+import React, { useState } from "react";
+import { View } from "react-native";
+import { useChat } from "../../src/hooks/useChat"; // ⬅ NAMED EXPORT
+import ChatUI from "../../src/components/ChatUI"; // ⬅ HARUS ADA FILE-NYA
+import { ChatMessage } from "../../src/types/chat";
 
-  const onSend = useCallback(async (newMessages: IMessage[] = []) => {
-    setMessages((prev) => GiftedChat.append(prev, newMessages));
+const Chat = () => {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const { sendChat } = useChat();
 
-    const userMessage = newMessages[0].text;
+  const [sessionId] = useState(() => Date.now().toString());
 
-    const botResponse = await sendMessageToBot(userMessage);
+  const makeMessage = (role: "user" | "bot", text: string): ChatMessage => ({
+    _id: Date.now().toString() + Math.random(),
+    role,
+    text,
+    createdAt: new Date(),
+    user: {
+      _id: role,
+      name: role === "user" ? "User" : "Bot",
+    },
+  });
 
-    const botMessage: IMessage = {
-      _id: Math.random(),
-      text: botResponse.reply,
-      createdAt: new Date(),
-      user: { _id: 2, name: "ChatBot" },
-    };
+  const handleSend = async (text: string) => {
+    const res = await sendChat(text, sessionId);
 
-    setMessages((prev) => GiftedChat.append(prev, botMessage));
-  }, []);
+    setMessages((prev) => [
+      ...prev,
+      makeMessage("user", text),
+      makeMessage("bot", res.reply),
+    ]);
+  };
 
   return (
-    <GiftedChat
-      messages={messages}
-      onSend={(msgs) => onSend(msgs)}
-      user={{ _id: 1 }}
-    />
+    <View style={{ flex: 1 }}>
+      <ChatUI messages={messages} onSend={handleSend} />
+    </View>
   );
-}
+};
+
+export default Chat;
