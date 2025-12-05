@@ -1,11 +1,31 @@
 // src/api/login.service.ts
-import axios from "axios";
-import { API_BASE_LOGIN } from "../config/env";
+import { authApi } from "./axios"; // gunakan instance yang sudah dibuat
 
-export const loginRequest = async (email: string, password: string) => {
-  const res = await axios.post(
-    `${API_BASE_LOGIN}Service/UsersChat/loginBackend`,
-    { Email: email, password }
-  );
-  return res.data;
+export const loginUser = async (email: string, password: string) => {
+  try {
+    const res = await authApi.post(
+      "Service/UsersChat/loginBackend",
+      {
+        Email: email,
+        password: password,
+      },
+      {
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+
+    if (res.data.error !== "0") {
+      throw new Error(res.data.msg || "Login gagal.");
+    }
+
+    // Parse session string JSON
+    const session = JSON.parse(res.data.session);
+
+    return {
+      ...session,
+      raw: res.data,
+    };
+  } catch (err: any) {
+    throw new Error(err.message || "Gagal login");
+  }
 };

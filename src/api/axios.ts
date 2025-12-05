@@ -1,7 +1,14 @@
 import axios from "axios";
-import { API_BASE_URL } from "../config/env";
+import { API_BASE_URL, API_BASE_LOGIN } from "../config/env";
 
-export const api = axios.create({
+// ---- API Bot ----
+export const botApi = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 15000,
+});
+
+// ---- API Login ----
+export const authApi = axios.create({
+  baseURL: API_BASE_LOGIN,
+  timeout: 15000,
 });
