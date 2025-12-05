@@ -4,36 +4,31 @@ import { View } from "react-native";
 import { useSelector } from "react-redux";
 import { useRouter } from "expo-router";
 
+import { useChat } from "../../src/hooks/useChat";
 import ChatUI from "../../src/components/ChatUI";
 import { ChatMessage } from "../../src/types/chat";
-import {
-  sendMessage,
-  sendFile,
-  getChatHistory,
-  deleteMessage,
-  clearHistory,
-} from "../../src/api/chat.service";
+import { deleteMessage, clearHistory } from "../../src/api/chat.service";
 
 const Chat = () => {
   const router = useRouter();
+  const { sendChat, loadChatHistory } = useChat();
   const user = useSelector((state: any) => state.auth.user);
   const sessionId = user?.KodeChat ?? Date.now().toString();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Load history
+  // Load chat history saat mount
   useEffect(() => {
     const init = async () => {
       if (!user) return;
+
       setLoading(true);
       try {
-        console.log("data user:", user);
-        console.log("user_id:", user.userid);
-        console.log("sessionId:", sessionId);
-        const history = await getChatHistory(sessionId, user.userid);
+        const history = await loadChatHistory(sessionId);
+
         const formatted = history.map((msg: any) => ({
-          _id: String(msg.id ?? Date.now()),
+          _id: msg.id?.toString() ?? Date.now().toString(),
           role: msg.sender,
           text: msg.message,
           image: msg.file_url,
@@ -44,24 +39,26 @@ const Chat = () => {
             name: msg.sender === "user" ? user?.name ?? "You" : "Bot",
           },
         }));
+
         setMessages(formatted);
       } catch (err) {
-        console.error("Gagal load chat history:", err);
+        console.log("Gagal load chat history:", err);
       } finally {
         setLoading(false);
       }
     };
+
     init();
   }, [user]);
 
   const pushMessage = (msg: ChatMessage) =>
     setMessages((prev) => [...prev, msg]);
 
-  // Hapus 1 bubble
+  // Hapus satu bubble
   const handleDeleteMessage = async (messageId: string) => {
     try {
-      await deleteMessage(String(user.userid), messageId);
-      setMessages((prev) => prev.filter((m) => String(m._id) !== messageId));
+      await deleteMessage(user.userid, messageId);
+      setMessages((prev) => prev.filter((m) => m._id !== messageId));
     } catch (err) {
       console.error(err);
     }
@@ -70,32 +67,29 @@ const Chat = () => {
   // Hapus semua history
   const handleClearAll = async () => {
     try {
-      await clearHistory(String(user.userid));
+      await clearHistory(user.userid);
       setMessages([]);
     } catch (err) {
       console.error(err);
     }
   };
 
-  // Kirim pesan teks/file
   const handleSend = async (payload: { text?: string; file?: any }) => {
     if (!payload.text && !payload.file) return;
 
     setLoading(true);
 
-    // Push user message
     const userMsg: ChatMessage = {
       _id: "user-" + Date.now(),
       role: "user",
-      text: payload.text ?? "",
-      file: payload.file ?? null,
+      text: payload.text || "",
+      file: payload.file || null,
       typing: false,
       createdAt: new Date(),
       user: { _id: "user", name: "You" },
     };
     pushMessage(userMsg);
 
-    // Bubble typing bot
     const typingMsg: ChatMessage = {
       _id: "typing-" + Date.now(),
       role: "bot",
@@ -110,21 +104,14 @@ const Chat = () => {
 
     try {
       const start = Date.now();
-      let res;
-      if (payload.file) {
-        res = await sendFile(sessionId, user.userid, payload.file);
-      } else {
-        res = await sendMessage(sessionId, user.userid, payload.text ?? "");
-      }
+      const res = await sendChat(payload, sessionId);
 
       const duration = Date.now() - start;
       const remain = Math.max(1000 - duration, 0);
       await new Promise((r) => setTimeout(r, remain));
 
-      // Hapus typing
       setMessages((prev) => prev.filter((m) => !m.typing));
 
-      // Tambah balasan bot
       pushMessage({
         _id: "bot-" + Date.now(),
         role: "bot",

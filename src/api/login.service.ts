@@ -1,5 +1,6 @@
 // src/api/login.service.ts
 import { authApi } from "./axios"; // gunakan instance yang sudah dibuat
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const loginUser = async (email: string, password: string) => {
   try {
@@ -20,6 +21,8 @@ export const loginUser = async (email: string, password: string) => {
 
     // Parse session string JSON
     const session = JSON.parse(res.data.session);
+    // simpan user ke storage
+    await AsyncStorage.setItem("authUser", JSON.stringify(session));
 
     return {
       ...session,

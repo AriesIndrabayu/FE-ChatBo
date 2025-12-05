@@ -55,16 +55,20 @@ const ChatUI: React.FC<Props> = ({
       <View style={styles.header}>
         <Text style={styles.headerTitle}>ChatBOT SIKONDA</Text>
 
-        <View style={{ flexDirection: "row", gap: 10 }}>
-          <TouchableOpacity style={styles.clearBtn} onPress={onClearAll}>
-            <Ionicons name="trash-outline" size={18} color="#fff" />
-            <Text style={styles.clearText}>Hapus Semua</Text>
-          </TouchableOpacity>
+        <View style={{ flexDirection: "row", gap: 8 }}>
+          {onClearAll && (
+            <TouchableOpacity style={styles.clearBtn} onPress={onClearAll}>
+              <Ionicons name="trash-outline" size={18} color="#fff" />
+              <Text style={styles.logoutText}>Hapus Semua</Text>
+            </TouchableOpacity>
+          )}
 
-          <TouchableOpacity style={styles.logoutBtn} onPress={onLogout}>
-            <Ionicons name="log-out-outline" size={18} color="#fff" />
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
+          {onLogout && (
+            <TouchableOpacity style={styles.logoutBtn} onPress={onLogout}>
+              <Ionicons name="log-out-outline" size={18} color="#fff" />
+              <Text style={styles.logoutText}>Logout</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
@@ -76,7 +80,7 @@ const ChatUI: React.FC<Props> = ({
         renderItem={({ item }) => (
           <ChatBubble
             message={item}
-            onDelete={() => onDeleteMessage?.(String(item._id))}
+            onDelete={() => onDeleteMessage?.(item._id)}
           />
         )}
         contentContainerStyle={{ paddingVertical: 12 }}
@@ -87,12 +91,10 @@ const ChatUI: React.FC<Props> = ({
 
       {/* INPUT AREA */}
       <View style={styles.inputRow}>
-        {/* FOTO BUTTON */}
         <TouchableOpacity style={styles.photoBtn} onPress={pickImage}>
           <Ionicons name="camera" size={20} color="white" />
         </TouchableOpacity>
 
-        {/* TEXT INPUT */}
         <TextInput
           placeholder="Tulis pesan..."
           value={text}
@@ -102,7 +104,6 @@ const ChatUI: React.FC<Props> = ({
           multiline
         />
 
-        {/* KIRIM BUTTON */}
         <TouchableOpacity
           style={[styles.sendBtn, loading && { opacity: 0.5 }]}
           disabled={loading}
@@ -131,11 +132,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: "#eee",
   },
+
   headerTitle: {
     fontSize: 20,
     fontWeight: "700",
     color: "#333",
   },
+
   logoutBtn: {
     flexDirection: "row",
     paddingVertical: 6,
@@ -145,7 +148,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
   },
-  logoutText: { color: "#fff", fontWeight: "600" },
+
   clearBtn: {
     flexDirection: "row",
     paddingVertical: 6,
@@ -155,7 +158,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
   },
-  clearText: { color: "#fff", fontWeight: "600" },
+
+  logoutText: {
+    color: "#fff",
+    fontWeight: "600",
+  },
+
   inputRow: {
     flexDirection: "row",
     padding: 10,
@@ -164,6 +172,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderColor: "#eee",
   },
+
   photoBtn: {
     backgroundColor: "#6c63ff",
     padding: 10,
@@ -171,6 +180,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+
   sendBtn: {
     backgroundColor: "#4CAF50",
     padding: 10,
@@ -179,6 +189,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+
   input: {
     flex: 1,
     minHeight: 40,

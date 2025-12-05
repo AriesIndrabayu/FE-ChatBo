@@ -3,18 +3,11 @@ import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import Markdown from "react-native-markdown-display";
 import { ChatMessage } from "../types/chat";
-import { Ionicons } from "@expo/vector-icons";
 
 interface Props {
   message: ChatMessage;
-  onDelete?: () => void;
+  onDelete?: () => void; // <-- opsional
 }
-
-const typingTexts = [
-  "Bot sedang menganalisis...",
-  "Bot sedang memprediksi...",
-  "Bot sedang menulis...",
-];
 
 // Safe cleanMarkdown
 const cleanMarkdown = (text?: string) => {
@@ -25,6 +18,12 @@ const cleanMarkdown = (text?: string) => {
     .join("\n")
     .trim();
 };
+
+const typingTexts = [
+  "Bot sedang menganalisis...",
+  "Bot sedang memprediksi...",
+  "Bot sedang menulis...",
+];
 
 const ChatBubble: React.FC<Props> = ({ message, onDelete }) => {
   const isUser = message.role === "user";
@@ -40,11 +39,12 @@ const ChatBubble: React.FC<Props> = ({ message, onDelete }) => {
     const interval = setInterval(() => {
       index = (index + 1) % typingTexts.length;
       setTypingText(typingTexts[index]);
-    }, 5000);
+    }, 5000); // ganti tiap 5 detik
 
     return () => clearInterval(interval);
   }, [message.typing]);
 
+  // Bubble typing
   if (message.typing) {
     return (
       <View style={[styles.container, styles.botContainer]}>
@@ -85,20 +85,21 @@ const ChatBubble: React.FC<Props> = ({ message, onDelete }) => {
         </Markdown>
       )}
 
-      <View style={styles.bottomRow}>
-        <Text style={styles.time}>
-          {message.createdAt
-            ? new Date(message.createdAt).toLocaleTimeString()
-            : ""}
-        </Text>
+      <Text style={styles.time}>
+        {message.createdAt
+          ? new Date(message.createdAt).toLocaleTimeString()
+          : ""}
+      </Text>
 
-        {/* Tombol delete per bubble */}
-        {onDelete && (
-          <TouchableOpacity onPress={onDelete} style={{ marginLeft: 6 }}>
-            <Ionicons name="trash-outline" size={14} color="#a11111ff" />
-          </TouchableOpacity>
-        )}
-      </View>
+      {/* Tombol delete */}
+      {isUser && onDelete && (
+        <TouchableOpacity
+          onPress={onDelete}
+          style={{ position: "absolute", top: 4, right: 4 }}
+        >
+          <Text style={{ color: "red", fontWeight: "bold" }}>❌</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -113,11 +114,6 @@ const styles = StyleSheet.create({
     maxWidth: "80%",
     borderRadius: 12,
   },
-  bottomRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-end",
-  },
   image: {
     width: 180,
     height: 180,
@@ -125,7 +121,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   userContainer: {
-    backgroundColor: "#a6becfff",
+    backgroundColor: "#0b93f6",
     alignSelf: "flex-end",
     borderTopRightRadius: 0,
   },
@@ -135,11 +131,12 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 0,
   },
   text: { fontSize: 15 },
-  userText: { color: "#292727ff" },
+  userText: { color: "#fff" },
   botText: { color: "#000" },
   time: {
     fontSize: 10,
-    opacity: 0.7,
+    alignSelf: "flex-end",
     marginTop: 6,
+    opacity: 0.7,
   },
 });

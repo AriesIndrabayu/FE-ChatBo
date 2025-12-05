@@ -1,12 +1,12 @@
 // FE-ChatBot/src/types/chat.ts
 export interface ChatUser {
-  _id: number | string;
+  _id: string;
   name?: string;
   avatar?: string;
 }
 
 export interface ChatMessage {
-  _id: number | string;
+  _id: string;
   role: "user" | "bot";
   text: string;
   createdAt: string | Date;
@@ -16,4 +16,6 @@ export interface ChatMessage {
   system?: boolean;
   delivered?: boolean;
   seen?: boolean;
+  typing?: boolean;
+  file?: any | null;
 }
