@@ -9,6 +9,6 @@ export const botApi = axios.create({
 
 // ---- API Login ----
 export const authApi = axios.create({
-  baseURL: API_BASE_LOGIN,
+  baseURL: `${API_BASE_LOGIN}dbms/`,
   timeout: 15000,
 });

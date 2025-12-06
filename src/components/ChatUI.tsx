@@ -9,6 +9,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  Image,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { ChatMessage } from "../types/chat";
@@ -22,6 +23,7 @@ interface Props {
   onLogout?: () => void;
   onDeleteMessage?: (messageId: string) => Promise<void>;
   onClearAll?: () => Promise<void>;
+  listRef?: React.RefObject<FlatList<ChatMessage>>;
 }
 
 const ChatUI: React.FC<Props> = ({
@@ -36,13 +38,21 @@ const ChatUI: React.FC<Props> = ({
   const listRef = useRef<FlatList<ChatMessage>>(null);
 
   const pickImage = async () => {
-    const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
-    });
+    try {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"], // web & mobile kompatibel
+        allowsEditing: false,
+        quality: 1,
+      });
 
-    if (!res.canceled) {
-      onSend({ file: res.assets[0] });
+      if (!result.canceled) {
+        const file = result.assets ? result.assets[0] : result;
+        console.log("picked file:", file);
+
+        onSend({ file }); // kirim ke handleSend
+      }
+    } catch (err) {
+      console.error("pickImage error:", err);
     }
   };
 
@@ -53,8 +63,16 @@ const ChatUI: React.FC<Props> = ({
     >
       {/* HEADER */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>ChatBOT SIKONDA</Text>
+        {/* Logo + Title */}
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+          <Image
+            source={require("../../assets/sikonda.png")}
+            style={styles.headerLogo}
+          />
+          <Text style={styles.headerTitle}>ChatBOT SIKONDA</Text>
+        </View>
 
+        {/* Tombol Hapus Semua & Logout */}
         <View style={{ flexDirection: "row", gap: 10 }}>
           <TouchableOpacity style={styles.clearBtn} onPress={onClearAll}>
             <Ionicons name="trash-outline" size={18} color="#fff" />
@@ -80,9 +98,12 @@ const ChatUI: React.FC<Props> = ({
           />
         )}
         contentContainerStyle={{ paddingVertical: 12 }}
-        onContentSizeChange={() =>
-          listRef.current?.scrollToEnd({ animated: true })
-        }
+        onContentSizeChange={() => {
+          setTimeout(() => {
+            listRef.current?.scrollToEnd({ animated: true });
+          }, 50);
+        }}
+        onLayout={() => listRef?.current?.scrollToEnd({ animated: true })}
       />
 
       {/* INPUT AREA */}
@@ -135,6 +156,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "700",
     color: "#333",
+  },
+  headerLogo: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    resizeMode: "cover",
   },
   logoutBtn: {
     flexDirection: "row",

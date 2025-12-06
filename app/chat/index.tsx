@@ -1,6 +1,6 @@
 // app/chat/index.tsx
-import React, { useState, useEffect } from "react";
-import { View } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { View, FlatList } from "react-native";
 import { useSelector } from "react-redux";
 import { useRouter } from "expo-router";
 
@@ -22,34 +22,36 @@ const Chat = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Ref FlatList
+  const listRef = useRef<FlatList<ChatMessage>>(null);
+
+  const refreshChatHistory = async () => {
+    try {
+      const history = await getChatHistory(sessionId, user.userid);
+      const formatted = history.map((msg: any) => ({
+        _id: String(msg.id ?? Date.now()),
+        role: msg.sender,
+        text: msg.message,
+        image: msg.file_url,
+        typing: false,
+        createdAt: msg.created_at ? new Date(msg.created_at) : new Date(),
+        user: {
+          _id: msg.sender === "user" ? "user" : "bot",
+          name: msg.sender === "user" ? user?.name ?? "You" : "Bot",
+        },
+      }));
+      setMessages(formatted);
+    } catch (err) {
+      console.error("Gagal refresh chat history:", err);
+    }
+  };
+
   // Load history
   useEffect(() => {
     const init = async () => {
       if (!user) return;
       setLoading(true);
-      try {
-        console.log("data user:", user);
-        console.log("user_id:", user.userid);
-        console.log("sessionId:", sessionId);
-        const history = await getChatHistory(sessionId, user.userid);
-        const formatted = history.map((msg: any) => ({
-          _id: String(msg.id ?? Date.now()),
-          role: msg.sender,
-          text: msg.message,
-          image: msg.file_url,
-          typing: false,
-          createdAt: msg.created_at ? new Date(msg.created_at) : new Date(),
-          user: {
-            _id: msg.sender === "user" ? "user" : "bot",
-            name: msg.sender === "user" ? user?.name ?? "You" : "Bot",
-          },
-        }));
-        setMessages(formatted);
-      } catch (err) {
-        console.error("Gagal load chat history:", err);
-      } finally {
-        setLoading(false);
-      }
+      refreshChatHistory().finally(() => setLoading(false));
     };
     init();
   }, [user]);
@@ -112,9 +114,20 @@ const Chat = () => {
       const start = Date.now();
       let res;
       if (payload.file) {
+        // console.log("sending file:", payload.file); // debug
         res = await sendFile(sessionId, user.userid, payload.file);
+        await refreshChatHistory(); // refresh khusus untuk file
+
+        // Scroll ke bawah setelah file sukses dikirim
+        setTimeout(() => {
+          listRef.current?.scrollToEnd({ animated: true });
+        }, 100);
       } else {
         res = await sendMessage(sessionId, user.userid, payload.text ?? "");
+        // Scroll ke bawah setelah file sukses dikirim
+        setTimeout(() => {
+          listRef.current?.scrollToEnd({ animated: true });
+        }, 100);
       }
 
       const duration = Date.now() - start;
@@ -160,6 +173,7 @@ const Chat = () => {
         }}
         onDeleteMessage={handleDeleteMessage}
         onClearAll={handleClearAll}
+        listRef={listRef}
       />
     </View>
   );

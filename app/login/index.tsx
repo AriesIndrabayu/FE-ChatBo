@@ -7,12 +7,18 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  ImageBackground,
+  Image,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  Dimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useDispatch } from "react-redux";
 import { loginUser } from "../../src/api/login.service";
 import { setUser } from "../../src/store/auth.slice";
+
+const { width } = Dimensions.get("window");
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -48,105 +54,130 @@ export default function LoginScreen() {
   };
 
   return (
-    <ImageBackground
-      source={{
-        uri: "https://assets.nflxext.com/ffe/siteui/vlv3/d1e334/NetflixBackground.jpg",
-      }}
-      style={styles.bg}
-      blurRadius={3}
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <View style={styles.overlay} />
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.card}>
+          {/* Logo */}
+          <Image
+            source={require("../../assets/sikonda.png")}
+            style={styles.logo}
+          />
 
-      <View style={styles.card}>
-        <Text style={styles.title}>Masuk</Text>
+          <Text style={styles.appName}>BOT-SIKONDA</Text>
 
-        {errorMsg ? <Text style={styles.error}>{errorMsg}</Text> : null}
+          {errorMsg ? <Text style={styles.error}>{errorMsg}</Text> : null}
 
-        <TextInput
-          placeholder="Email"
-          placeholderTextColor="#999"
-          value={email}
-          onChangeText={setEmail}
-          style={styles.input}
-        />
+          <TextInput
+            placeholder="Email"
+            placeholderTextColor="#999"
+            value={email}
+            onChangeText={setEmail}
+            style={styles.input}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
 
-        <TextInput
-          placeholder="Password"
-          placeholderTextColor="#999"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-          style={styles.input}
-        />
+          <TextInput
+            placeholder="Password"
+            placeholderTextColor="#999"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+            style={styles.input}
+          />
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleLogin}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text style={styles.buttonText}>Masuk</Text>
-          )}
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, loading && { opacity: 0.6 }]}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text style={styles.buttonText}>Masuk</Text>
+            )}
+          </TouchableOpacity>
 
-        <Text style={styles.footer}>Aplikasi Chat Bot • Jawa Barat</Text>
-      </View>
-    </ImageBackground>
+          <Text style={styles.footer}>
+            Aplikasi Chat Bot • Bakesbangpol Provinsi Jawa Barat
+          </Text>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  bg: { flex: 1, justifyContent: "center" },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.65)",
+  container: {
+    flexGrow: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f0f2f5",
+    padding: 16,
   },
   card: {
+    width: width > 400 ? 380 : "90%",
+    backgroundColor: "white",
     padding: 24,
-    marginHorizontal: 20,
-    backgroundColor: "rgba(0,0,0,0.75)",
-    borderRadius: 12,
+    borderRadius: 16,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  title: {
-    fontSize: 32,
+  logo: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 16,
+  },
+  appName: {
+    fontSize: 28,
     fontWeight: "700",
-    color: "white",
-    marginBottom: 20,
-    textAlign: "center",
+    color: "#333",
+    marginBottom: 24,
   },
   input: {
-    backgroundColor: "#222",
-    color: "white",
-    marginBottom: 15,
-    padding: 12,
-    borderRadius: 8,
+    width: "100%",
+    backgroundColor: "#f7f7f7",
+    color: "#333",
+    marginBottom: 16,
+    padding: 14,
+    borderRadius: 12,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: "#333",
+    borderColor: "#ddd",
   },
   button: {
-    backgroundColor: "#e50914",
+    width: "100%",
+    backgroundColor: "#0b93f6",
     padding: 14,
-    borderRadius: 8,
-    marginTop: 10,
+    borderRadius: 12,
+    alignItems: "center",
+    marginTop: 8,
   },
   buttonText: {
-    textAlign: "center",
     color: "white",
     fontWeight: "700",
     fontSize: 16,
   },
   error: {
-    color: "#ff7373",
-    marginBottom: 10,
+    color: "#e74c3c",
+    marginBottom: 12,
     textAlign: "center",
   },
   footer: {
-    color: "#aaa",
-    textAlign: "center",
-    marginTop: 18,
+    color: "#999",
+    marginTop: 20,
     fontSize: 12,
+    textAlign: "center",
   },
 });

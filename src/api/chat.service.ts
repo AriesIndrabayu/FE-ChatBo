@@ -1,6 +1,7 @@
 // src/api/chat.service.ts
 import { botApi } from "./axios";
 import Constants from "expo-constants";
+import { Platform } from "react-native";
 
 export const getChatHistory = async (session_id: string, user_id: string) => {
   try {
@@ -90,21 +91,39 @@ export const sendFile = async (
   user_id: number,
   file: any
 ) => {
-  const form = new FormData();
-  form.append("session_id", session_id);
-  form.append("user_id", String(user_id));
-  form.append("file", {
-    uri: file.uri,
-    name: file.name ?? "upload.jpg",
-    type: file.mimeType ?? "image/jpeg",
-  } as any);
+  try {
+    const form = new FormData();
+    form.append("session_id", session_id);
+    form.append("user_id", String(user_id));
 
-  const res = await botApi.post("/bot", form, {
-    headers: {
-      "x-api-key": Constants.expoConfig?.extra?.KEY_API,
-      "Content-Type": "multipart/form-data",
-    },
-  });
+    let fileToUpload: any;
 
-  return res.data;
+    if (Platform.OS === "web") {
+      const blob = await fetch(file.uri).then((r) => r.blob());
+      fileToUpload = new File([blob], file.name || `upload_${Date.now()}.jpg`, {
+        type: file.type || file.mimeType || "image/jpeg",
+      });
+    } else {
+      fileToUpload = {
+        uri:
+          Platform.OS === "android"
+            ? file.uri.replace("file://", "")
+            : file.uri,
+        name: file.name || `upload_${Date.now()}.jpg`,
+        type: file.type || file.mimeType || "image/jpeg",
+      } as any;
+    }
+
+    form.append("file", fileToUpload);
+
+    const res = await botApi.post("/bot", form, {
+      headers: { "x-api-key": Constants.expoConfig?.extra?.KEY_API },
+    });
+
+    console.log("sendFile response:", res.data);
+    return res.data;
+  } catch (err: any) {
+    console.error("sendFile error:", err.response?.data || err.message);
+    throw err;
+  }
 };

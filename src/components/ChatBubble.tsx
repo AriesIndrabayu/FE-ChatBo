@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import Markdown from "react-native-markdown-display";
 import { ChatMessage } from "../types/chat";
 import { Ionicons } from "@expo/vector-icons";
+import { API_BASE_LOGIN } from "../config/env";
 
 interface Props {
   message: ChatMessage;
@@ -11,6 +12,7 @@ interface Props {
 }
 
 const typingTexts = [
+  "Bot sedang proses machine learning...",
   "Bot sedang menganalisis...",
   "Bot sedang memprediksi...",
   "Bot sedang menulis...",
@@ -54,6 +56,33 @@ const ChatBubble: React.FC<Props> = ({ message, onDelete }) => {
   }
 
   const cleanedText = cleanMarkdown(message.text);
+  const getImageUri = (message: ChatMessage) => {
+    // Gunakan message.image jika ada, tambahkan API_BASE_LOGIN
+    if (message.image) {
+      const path = message.image.startsWith("/")
+        ? message.image
+        : `/${message.image}`;
+      const fullUri = `${API_BASE_LOGIN}${path}`;
+      console.log("getImageUri - fullUri from image:", fullUri);
+      return fullUri;
+    }
+
+    // Jika ada file.uri
+    if (message.file?.uri) {
+      const path = message.file.uri.startsWith("/")
+        ? message.file.uri
+        : `/${message.file.uri}`;
+      const fullUri = `${API_BASE_LOGIN}${path}`;
+      console.log("getImageUri - fullUri from file.uri:", fullUri);
+      return fullUri;
+    }
+
+    return null;
+  };
+
+  // Ambil URI file atau image
+  const imageUri = getImageUri(message);
+  console.log("imageUri:", imageUri);
 
   return (
     <View
@@ -64,10 +93,7 @@ const ChatBubble: React.FC<Props> = ({ message, onDelete }) => {
     >
       {/* Render image jika ada */}
       {(message.image || message.file?.uri) && (
-        <Image
-          source={{ uri: message.image || message.file?.uri }}
-          style={styles.image}
-        />
+        <Image source={{ uri: imageUri }} style={styles.image} />
       )}
 
       {isUser ? (
@@ -79,6 +105,11 @@ const ChatBubble: React.FC<Props> = ({ message, onDelete }) => {
             strong: { fontWeight: "bold" },
             em: { fontStyle: "italic" },
             strong_em: { fontWeight: "bold", fontStyle: "italic" },
+            link: {
+              fontWeight: "bold", // tebal
+              color: "#007bff", // biru
+              textDecorationLine: "none", // hilangkan underline
+            },
           }}
         >
           {cleanedText}
