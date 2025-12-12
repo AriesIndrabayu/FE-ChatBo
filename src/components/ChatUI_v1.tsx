@@ -1,4 +1,4 @@
-// src/components/ChatUI.tsx
+// src/components/ChatUI.tsx (Responsive Version)
 import React, { useState, useRef } from "react";
 import {
   View,
@@ -9,22 +9,18 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  Image,
+  Dimensions,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import { Ionicons } from "@expo/vector-icons";
 import { ChatMessage } from "../types/chat";
 import ChatBubble from "./ChatBubble";
-import { Ionicons } from "@expo/vector-icons";
 
-interface Props {
-  messages: ChatMessage[];
-  onSend: (payload: { text?: string; file?: any }) => void;
-  loading?: boolean;
-  onLogout?: () => void;
-  onDeleteMessage?: (messageId: string) => Promise<void>;
-  onClearAll?: () => Promise<void>;
-}
+const { width } = Dimensions.get("window");
+const isSmall = width < 380;
 
-const ChatUI: React.FC<Props> = ({
+const ChatUI = ({
   messages,
   onSend,
   loading,
@@ -33,42 +29,42 @@ const ChatUI: React.FC<Props> = ({
   onClearAll,
 }) => {
   const [text, setText] = useState("");
-  const listRef = useRef<FlatList<ChatMessage>>(null);
+  const listRef = useRef(null);
 
   const pickImage = async () => {
-    const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      quality: 1,
     });
 
-    if (!res.canceled) {
-      onSend({ file: res.assets[0] });
+    if (!result.canceled) {
+      const file = result.assets[0];
+      onSend({ file });
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
       {/* HEADER */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>ChatBOT SIKONDA</Text>
+        <View style={styles.headerLeft}>
+          <Image
+            source={require("../../assets/sikonda.png")}
+            style={styles.headerLogo}
+          />
+          <Text style={styles.headerTitle}>ChatBOT SIKONDA</Text>
+        </View>
 
-        <View style={{ flexDirection: "row", gap: 8 }}>
-          {onClearAll && (
-            <TouchableOpacity style={styles.clearBtn} onPress={onClearAll}>
-              <Ionicons name="trash-outline" size={18} color="#fff" />
-              <Text style={styles.logoutText}>Hapus Semua</Text>
-            </TouchableOpacity>
-          )}
+        <View style={styles.headerRight}>
+          <TouchableOpacity style={styles.clearBtn} onPress={onClearAll}>
+            <Ionicons name="trash-outline" size={16} color="#fff" />
+            {!isSmall && <Text style={styles.clearText}>Hapus</Text>}
+          </TouchableOpacity>
 
-          {onLogout && (
-            <TouchableOpacity style={styles.logoutBtn} onPress={onLogout}>
-              <Ionicons name="log-out-outline" size={18} color="#fff" />
-              <Text style={styles.logoutText}>Logout</Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity style={styles.logoutBtn} onPress={onLogout}>
+            <Ionicons name="log-out-outline" size={16} color="#fff" />
+            {!isSmall && <Text style={styles.logoutText}>Logout</Text>}
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -80,13 +76,14 @@ const ChatUI: React.FC<Props> = ({
         renderItem={({ item }) => (
           <ChatBubble
             message={item}
-            onDelete={() => onDeleteMessage?.(item._id)}
+            onDelete={() => onDeleteMessage(String(item._id))}
           />
         )}
-        contentContainerStyle={{ paddingVertical: 12 }}
+        contentContainerStyle={{ paddingVertical: 8 }}
         onContentSizeChange={() =>
           listRef.current?.scrollToEnd({ animated: true })
         }
+        onLayout={() => listRef.current?.scrollToEnd({ animated: true })}
       />
 
       {/* INPUT AREA */}
@@ -125,81 +122,82 @@ export default ChatUI;
 const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
-    padding: 14,
+    padding: 12,
     backgroundColor: "#ffffff",
     justifyContent: "space-between",
     alignItems: "center",
     borderBottomWidth: 1,
     borderColor: "#eee",
   },
-
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  headerLogo: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+  },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "700",
     color: "#333",
   },
-
-  logoutBtn: {
+  headerRight: {
     flexDirection: "row",
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: "#e74c3c",
-    borderRadius: 20,
-    alignItems: "center",
     gap: 6,
   },
-
   clearBtn: {
     flexDirection: "row",
     paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     backgroundColor: "#f39c12",
-    borderRadius: 20,
+    borderRadius: 18,
     alignItems: "center",
-    gap: 6,
+    gap: 4,
   },
-
-  logoutText: {
-    color: "#fff",
-    fontWeight: "600",
+  clearText: { color: "#fff", fontWeight: "600" },
+  logoutBtn: {
+    flexDirection: "row",
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: "#e74c3c",
+    borderRadius: 18,
+    alignItems: "center",
+    gap: 4,
   },
+  logoutText: { color: "#fff", fontWeight: "600" },
 
   inputRow: {
     flexDirection: "row",
-    padding: 10,
+    padding: 8,
     alignItems: "center",
     backgroundColor: "#fafafa",
     borderTopWidth: 1,
     borderColor: "#eee",
   },
-
   photoBtn: {
     backgroundColor: "#6c63ff",
     padding: 10,
     borderRadius: 50,
-    justifyContent: "center",
-    alignItems: "center",
   },
-
   sendBtn: {
     backgroundColor: "#4CAF50",
     padding: 10,
     borderRadius: 50,
     marginLeft: 6,
-    justifyContent: "center",
-    alignItems: "center",
   },
-
   input: {
     flex: 1,
-    minHeight: 40,
-    maxHeight: 120,
+    minHeight: 36,
+    maxHeight: 100,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 6,
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 20,
-    marginHorizontal: 8,
+    marginHorizontal: 6,
     backgroundColor: "#fff",
   },
 });

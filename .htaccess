@@ -1,0 +1,11 @@
+RewriteEngine On
+
+# === REVERSE PROXY KE BACKEND BOT (Uvicorn port 8000) ===
+RewriteCond %{REQUEST_URI} ^/api/
+RewriteRule ^api/(.*)$ http://ml.jawabarat.info:8000/api/$1 [P,L]
+
+# === SPA ROUTING EXPO / REACT ===
+# (hanya aktif jika file/folder tidak ditemukan)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.html [QSA,L]
